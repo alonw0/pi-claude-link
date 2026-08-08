@@ -17,10 +17,10 @@ natively. Inspired by [pi-intercom](https://github.com/nicobailon/pi-intercom)
 - **Real-time inbound** — a message from Claude is injected into the live pi session
   immediately (idle → starts a turn; busy → steers into the current turn). Pi's reply
   is relayed back to the sender automatically.
-- **Model-facing `mesh` tool** — the pi model can list and message Claude sessions:
-  - `mesh({ action: "list" })` — reachable sessions
-  - `mesh({ action: "send", to, message })` — fire-and-forget; reply arrives back in-session
-  - `mesh({ action: "ask", to, message })` — blocks and returns the reply
+- **Model-facing `claude-link` tool** — the pi model can list and message Claude sessions:
+  - `claude-link({ action: "list" })` — reachable sessions
+  - `claude-link({ action: "send", to, message })` — fire-and-forget; reply arrives back in-session
+  - `claude-link({ action: "ask", to, message })` — blocks and returns the reply
 
 ## Requirements
 
@@ -40,8 +40,8 @@ pi -e /path/to/pi-claude-link/index.ts
 Start pi normally — it joins the mesh on session start. Use it from either side:
 
 - **In Claude:** `/list-agents` shows `pi-<dir>`; `SendMessage` to it.
-- **In pi:** ask it to "list the Claude sessions" or "message `<name>` …" (the `mesh`
-  tool + bundled skill handle it), or run `/mesh` to list.
+- **In pi:** ask it to "list the Claude sessions" or "message `<name>` …" (the `claude-link`
+  tool + bundled skill handle it), or run `/claude-link` to list.
 
 ## How it works
 
@@ -53,7 +53,7 @@ Claude's wire protocol (`claude-protocol.ts`):
 - **inbound** (`type:"user"` frame) → strip the `<cross-session-message>` envelope →
   `pi.sendUserMessage(...)` (real-time) + send a delivery receipt + record the sender.
 - **`agent_end`** → relay pi's reply back to the recorded sender(s).
-- **`mesh` tool** → `list` reads Claude's registry; `send`/`ask` connect to the target's
+- **`claude-link` tool** → `list` reads Claude's registry; `send`/`ask` connect to the target's
   socket and write a peer frame; replies route back to our socket → injected.
 - **`session_shutdown`** → unlink socket + remove the registry entry.
 

@@ -5,7 +5,7 @@
  * cross-session registry (so it appears in Claude's /list-agents) and binds a
  * socket that speaks Claude's wire protocol. Inbound messages from Claude are
  * injected into the live pi session in real time; the pi model can list and
- * message Claude sessions via the `mesh` tool.
+ * message Claude sessions via the `claude-link` tool.
  *
  * Runs in-process; no daemon, no external transport — Claude's registry is the hub.
  */
@@ -91,7 +91,7 @@ export default function piMeshExtension(pi: ExtensionAPI) {
       pi.sendUserMessage(framed, idle ? undefined : { deliverAs: "steer" });
       if (fromAddr.startsWith("uds:")) pendingReplies.add(fromAddr);
       ackDelivered(fromAddr, frame.msg_id);
-      notify(`Mesh: message from ${who}`, "info");
+      notify(`claude-link: message from ${who}`, "info");
     } catch (e) { dbg(`inject failed: ${(e as Error).message}`); }
   }
 
@@ -175,13 +175,13 @@ export default function piMeshExtension(pi: ExtensionAPI) {
   const text = (t: string, isError = false) => ({ content: [{ type: "text" as const, text: t }], ...(isError && { isError: true }) });
 
   pi.registerTool({
-    name: "mesh",
-    label: "Agent Mesh",
+    name: "claude-link",
+    label: "Claude Link",
     description:
-      "Talk to other AI coding sessions (Claude Code) running on this machine. " +
+      "Talk to Claude Code sessions running on this machine. " +
       "action:list shows reachable sessions; action:send delivers a message (reply comes back into this session); " +
       "action:ask sends and waits for the reply, returning it.",
-    promptSnippet: "Message other Claude Code sessions on this machine.",
+    promptSnippet: "Message Claude Code sessions on this machine.",
     parameters: PARAMS,
     async execute(_id, params) {
       const excludeSock = sockPath;
@@ -233,8 +233,8 @@ export default function piMeshExtension(pi: ExtensionAPI) {
   });
 
   // ---- convenience command -------------------------------------------------
-  pi.registerCommand("mesh", {
-    description: "List Claude Code sessions you can message (via the mesh tool)",
+  pi.registerCommand("claude-link", {
+    description: "List Claude Code sessions you can message (via the claude-link tool)",
     handler: async (_args, ctx) => {
       const rows = await listClaudeSessions({ excludeSock: sockPath });
       if (!rows.length) { ctx.ui.notify("No live Claude sessions found.", "info"); return; }

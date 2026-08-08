@@ -3,7 +3,7 @@
 //  - launches a real pi rpc session with the pi-claude-link extension
 //  - INBOUND: sends a peer message to the pi session; pi injects it in real time,
 //    answers, and relays the reply back to the listener
-//  - OUTBOUND: prompts pi to use the `mesh` tool to message the listener
+//  - OUTBOUND: prompts pi to use the `claude-link` tool to message the listener
 // Never targets real sessions — only the throwaway listener + our own pi session.
 import { spawn } from "node:child_process";
 import { readdirSync, readFileSync, mkdirSync } from "node:fs";
@@ -61,14 +61,14 @@ for (let i = 0; i < 60 && !received.some((r) => /MESH-PI-OK/.test(r.body)); i++)
 const inboundOk = received.some((r) => /MESH-PI-OK/.test(r.body));
 console.log(inboundOk ? "INBOUND round-trip ✓" : "INBOUND: no relayed reply captured");
 
-// ---- OUTBOUND test: pi uses the mesh tool to message the listener ----
-console.log("\n>>> OUTBOUND: prompting pi to use the mesh tool...");
+// ---- OUTBOUND test: pi uses the claude-link tool to message the listener ----
+console.log("\n>>> OUTBOUND: prompting pi to use the claude-link tool...");
 received.length = 0;
 pi.stdin.write(JSON.stringify({ type: "prompt",
-  message: 'Use the mesh tool: action "send", to "mesh-demo-claude", message "HELLO-FROM-PI". Then stop.' }) + "\n");
+  message: 'Use the claude-link tool: action "send", to "mesh-demo-claude", message "HELLO-FROM-PI". Then stop.' }) + "\n");
 for (let i = 0; i < 60 && !received.some((r) => /HELLO-FROM-PI/.test(r.body)); i++) await sleep(1000);
 const outboundOk = received.some((r) => /HELLO-FROM-PI/.test(r.body));
-console.log(outboundOk ? "OUTBOUND (mesh tool send) ✓" : "OUTBOUND: listener did not receive the tool send");
+console.log(outboundOk ? "OUTBOUND (claude-link tool send) ✓" : "OUTBOUND: listener did not receive the tool send");
 
 // ---- cleanup ----
 pi.stdin.end(); await sleep(1500);
