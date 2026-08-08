@@ -1,19 +1,19 @@
-// Full e2e round-trip under Node 22:
+// Full e2e round-trip:
 //  - stands up a throwaway "Claude" peer (listener) in Claude's registry
 //  - launches a real pi rpc session with the pi-claude-link extension
 //  - INBOUND: sends a peer message to the pi session; pi injects it in real time,
 //    answers, and relays the reply back to the listener
 //  - OUTBOUND: prompts pi to use the `claude-link` tool to message the listener
 // Never targets real sessions — only the throwaway listener + our own pi session.
-import { spawn } from "node:child_process";
+//
+// Run under a pi-compatible Node (>= 20.19). If `pi` on PATH is on an old Node:
+//   PI_CMD="/path/node22 /path/pi/dist/cli.js" node --experimental-strip-types test/roundtrip.mjs
 import { readdirSync, readFileSync, mkdirSync } from "node:fs";
-import { homedir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import * as P from "../claude-protocol.ts";
+import { EXT, spawnPi } from "./pi-launch.mjs";
 
-const PI_CLI = "/Users/alonw/.nvm/versions/node/v20.13.1/lib/node_modules/@earendil-works/pi-coding-agent/dist/cli.js";
-const NODE22 = process.execPath; // we run under node22
-const EXT = "/Users/alonw/projects/pi-claude-link/index.ts";
 const REG = path.join(homedir(), ".claude", "sessions");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -30,12 +30,12 @@ await P.bindSocket(lsock, (frame) => {
     console.log(`<<< receipt: ${frame.action}=${frame.status}`);
   }
 });
-await P.registerPeer({ pid: lpid, sessionId: `demo-${lpid}`, name: "mesh-demo-claude", cwd: process.cwd(), sockPath: lsock });
-console.log(`listener up as mesh-demo-claude (${lsock})`);
+await P.registerPeer({ pid: lpid, sessionId: `demo-${lpid}`, name: "claude-demo", cwd: process.cwd(), sockPath: lsock });
+console.log(`listener up as claude-demo (${lsock})`);
 
 // ---- launch pi ----
-const testCwd = "/tmp/pi-claude-link-rt"; mkdirSync(testCwd, { recursive: true });
-const pi = spawn(NODE22, [PI_CLI, "--mode", "rpc", "-e", EXT], {
+const testCwd = path.join(tmpdir(), "pi-claude-link-rt"); mkdirSync(testCwd, { recursive: true });
+const pi = spawnPi(["--mode", "rpc", "-e", EXT], {
   cwd: testCwd, stdio: ["pipe", "pipe", "pipe"], env: { ...process.env, PI_CLAUDE_LINK_DEBUG: "1" },
 });
 let piOut = "";
@@ -55,7 +55,7 @@ if (!entry) { pi.kill("SIGKILL"); await P.deregisterPeer(lpid, lsock); process.e
 
 // ---- INBOUND test: message the pi session, expect a relayed reply ----
 console.log("\n>>> INBOUND: sending peer message to pi...");
-await P.sendToClaude({ sock: entry.messagingSocketPath, from: `uds:${lsock}`, fromName: "mesh-demo-claude",
+await P.sendToClaude({ sock: entry.messagingSocketPath, from: `uds:${lsock}`, fromName: "claude-demo",
   body: "Reply with exactly: MESH-PI-OK followed by the value of 6*7. Nothing else." });
 for (let i = 0; i < 60 && !received.some((r) => /MESH-PI-OK/.test(r.body)); i++) await sleep(1000);
 const inboundOk = received.some((r) => /MESH-PI-OK/.test(r.body));
@@ -65,7 +65,7 @@ console.log(inboundOk ? "INBOUND round-trip ✓" : "INBOUND: no relayed reply ca
 console.log("\n>>> OUTBOUND: prompting pi to use the claude-link tool...");
 received.length = 0;
 pi.stdin.write(JSON.stringify({ type: "prompt",
-  message: 'Use the claude-link tool: action "send", to "mesh-demo-claude", message "HELLO-FROM-PI". Then stop.' }) + "\n");
+  message: 'Use the claude-link tool: action "send", to "claude-demo", message "HELLO-FROM-PI". Then stop.' }) + "\n");
 for (let i = 0; i < 60 && !received.some((r) => /HELLO-FROM-PI/.test(r.body)); i++) await sleep(1000);
 const outboundOk = received.some((r) => /HELLO-FROM-PI/.test(r.body));
 console.log(outboundOk ? "OUTBOUND (claude-link tool send) ✓" : "OUTBOUND: listener did not receive the tool send");
