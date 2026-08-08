@@ -15,7 +15,7 @@ import { Type } from "typebox";
 import {
   ccSocksDir, bindSocket, registerPeer, updatePeer, deregisterPeer,
   listClaudeSessions, resolveTarget, sendToClaude, stripEnvelope, receiptFrame, sendFrame,
-  slugFromCwd,
+  slugFromCwd, peerNameBySock,
 } from "./claude-protocol.ts";
 import path from "node:path";
 import { appendFileSync, existsSync } from "node:fs";
@@ -61,8 +61,10 @@ export default function piMeshExtension(pi: ExtensionAPI) {
 
     const env = stripEnvelope(raw);
     const fromAddr: string = frame.from || env.from || "";
-    const who = env.fromName || (fromAddr.startsWith("uds:") ? fromAddr.slice(4) : fromAddr) || "another agent";
     const targetSock = fromAddr.startsWith("uds:") ? fromAddr.slice(4) : "";
+    // Prefer the registry name (matches Claude's /list-agents) over the envelope
+    // from-name, which can be a stale/verbose session title.
+    const who = peerNameBySock(targetSock) || env.fromName || targetSock || fromAddr || "another agent";
 
     // If this is the reply to a blocking `ask`, resolve the waiter instead of injecting.
     const waiters = targetSock ? askWaiters.get(targetSock) : undefined;

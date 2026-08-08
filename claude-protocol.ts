@@ -263,6 +263,22 @@ export async function deregisterPeer(pid: number, sockPath?: string): Promise<vo
   if (sockPath) await unlink(sockPath).catch(() => {});
 }
 
+/** The display name Claude's /list-agents shows for the session bound to `sock`,
+ *  looked up from the registry so it always matches the list (envelope from-name
+ *  can be a stale title). Returns undefined if no registry entry matches. */
+export function peerNameBySock(sock: string): string | undefined {
+  if (!sock) return undefined;
+  try {
+    for (const f of readdirSync(CLAUDE_REGISTRY)) {
+      if (!/^\d+\.json$/.test(f)) continue;
+      let s: any;
+      try { s = JSON.parse(readFileSync(path.join(CLAUDE_REGISTRY, f), "utf8")); } catch { continue; }
+      if (s.messagingSocketPath === sock && typeof s.name === "string") return s.name;
+    }
+  } catch { /* registry missing */ }
+  return undefined;
+}
+
 export function slugFromCwd(cwd: string): string {
   const base = path.basename(cwd || "pi") || "pi";
   return base.replace(/[^a-zA-Z0-9._-]/g, "-").slice(0, 32);
