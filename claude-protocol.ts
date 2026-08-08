@@ -189,13 +189,19 @@ export function receiptFrame(o: { status: string; from?: string; origMsgId?: str
   };
 }
 
-/** Bind a listening UDS server yielding parsed frames via onFrame(frame, socket). */
+/** Bind a listening UDS server yielding parsed frames via onFrame(frame, socket).
+ *
+ *  Note: we do NOT use allowHalfOpen. Claude's sender (`d1p`) writes a frame, then
+ *  half-closes and resolves its send only when the socket fully CLOSES — timing out
+ *  after 5s otherwise. If we held the connection half-open, every `SendMessage` to us
+ *  would be reported as "Failed to send / Timed out" even though we received it. So we
+ *  let the socket close (default allowHalfOpen:false) and also end our side on `end`. */
 export async function bindSocket(sockPath: string, onFrame: (frame: any, conn: Socket) => void): Promise<Server> {
   const dir = path.dirname(sockPath);
   await mkdir(dir, { recursive: true, mode: 0o700 }).catch(() => {});
   await chmod(dir, 0o700).catch(() => {});
   await unlink(sockPath).catch(() => {});
-  const server = createServer({ allowHalfOpen: true }, (conn) => {
+  const server = createServer((conn) => {
     conn.setEncoding("utf8");
     let buf = "";
     conn.on("data", (d: string) => {
@@ -209,6 +215,9 @@ export async function bindSocket(sockPath: string, onFrame: (frame: any, conn: S
         try { onFrame(frame, conn); } catch { /* handler error */ }
       }
     });
+    // When the client half-closes, close our side too so the sender's socket fully
+    // closes and its send resolves (see note above).
+    conn.on("end", () => { try { conn.end(); } catch { /* */ } });
     conn.on("error", () => {});
   });
   await new Promise<void>((res, rej) => {
