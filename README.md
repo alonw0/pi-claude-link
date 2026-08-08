@@ -145,6 +145,12 @@ Verified against **pi-coding-agent 0.80.6** and **Claude Code 2.1.224**. The Cla
 side relies on its cross-session messaging protocol; if a future Claude release
 changes it, `claude-protocol.ts` is the single place to update.
 
+## More
+
+- [SECURITY.md](./SECURITY.md) — trust model and how to report a vulnerability
+- [CONTRIBUTING.md](./CONTRIBUTING.md) — layout and how to run the tests
+- [CHANGELOG.md](./CHANGELOG.md) — release notes
+
 ## License
 
 [MIT](./LICENSE)

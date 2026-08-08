@@ -30,11 +30,20 @@
     "type": "git",
     "url": "git+https://github.com/alonw0/pi-claude-link.git"
   },
+  "homepage": "https://github.com/alonw0/pi-claude-link#readme",
+  "bugs": {
+    "url": "https://github.com/alonw0/pi-claude-link/issues"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
   "files": [
     "index.ts",
     "claude-protocol.ts",
     "skills",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "SECURITY.md",
+    "CHANGELOG.md"
   ]
 }
