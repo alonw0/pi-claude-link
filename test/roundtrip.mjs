@@ -1,6 +1,6 @@
 // Full e2e round-trip under Node 22:
 //  - stands up a throwaway "Claude" peer (listener) in Claude's registry
-//  - launches a real pi rpc session with the pi-mesh extension
+//  - launches a real pi rpc session with the pi-claude-link extension
 //  - INBOUND: sends a peer message to the pi session; pi injects it in real time,
 //    answers, and relays the reply back to the listener
 //  - OUTBOUND: prompts pi to use the `mesh` tool to message the listener
@@ -13,7 +13,7 @@ import * as P from "../claude-protocol.ts";
 
 const PI_CLI = "/Users/alonw/.nvm/versions/node/v20.13.1/lib/node_modules/@earendil-works/pi-coding-agent/dist/cli.js";
 const NODE22 = process.execPath; // we run under node22
-const EXT = "/Users/alonw/projects/pi-mesh/index.ts";
+const EXT = "/Users/alonw/projects/pi-claude-link/index.ts";
 const REG = path.join(homedir(), ".claude", "sessions");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -34,9 +34,9 @@ await P.registerPeer({ pid: lpid, sessionId: `demo-${lpid}`, name: "mesh-demo-cl
 console.log(`listener up as mesh-demo-claude (${lsock})`);
 
 // ---- launch pi ----
-const testCwd = "/tmp/pi-mesh-rt"; mkdirSync(testCwd, { recursive: true });
+const testCwd = "/tmp/pi-claude-link-rt"; mkdirSync(testCwd, { recursive: true });
 const pi = spawn(NODE22, [PI_CLI, "--mode", "rpc", "-e", EXT], {
-  cwd: testCwd, stdio: ["pipe", "pipe", "pipe"], env: { ...process.env, PI_MESH_DEBUG: "1" },
+  cwd: testCwd, stdio: ["pipe", "pipe", "pipe"], env: { ...process.env, PI_CLAUDE_LINK_DEBUG: "1" },
 });
 let piOut = "";
 pi.stdout.on("data", (d) => (piOut += d));

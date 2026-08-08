@@ -239,7 +239,7 @@ export async function registerPeer(o: {
     cwd: o.cwd || process.cwd(),
     startedAt: Date.now(),
     procStart: await procStart(o.pid),
-    version: "pi-mesh",
+    version: "pi-claude-link",
     peerProtocol: 1,
     kind: "interactive",
     entrypoint: "pi",

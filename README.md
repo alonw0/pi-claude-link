@@ -1,4 +1,4 @@
-# pi-mesh
+# pi-claude-link
 
 Mesh [pi coding-agent](https://github.com/earendil-works/pi) sessions with
 [Claude Code](https://claude.com/claude-code). A pi session running this extension
@@ -8,7 +8,7 @@ appears in Claude's `/list-agents` and can exchange messages with Claude session
 It bridges onto Claude Code's own cross-session messaging protocol (the mechanism
 behind Claude's `/list-agents` + `SendMessage`), so pi and Claude interoperate
 natively. Inspired by [pi-intercom](https://github.com/nicobailon/pi-intercom)
-(pi↔pi); pi-mesh does pi↔Claude.
+(pi↔pi); pi-claude-link does pi↔Claude.
 
 ## What you get
 
@@ -26,15 +26,15 @@ natively. Inspired by [pi-intercom](https://github.com/nicobailon/pi-intercom)
 
 - pi coding-agent (`@earendil-works/pi-coding-agent`) on **Node ≥ 20.19 / 22**.
 - Claude Code with cross-session messaging active (the `tengu_harbor_kite` feature;
-  its sockets live in `~/.claude/sessions/` + a `cc-socks` dir). pi-mesh discovers
+  its sockets live in `~/.claude/sessions/` + a `cc-socks` dir). pi-claude-link discovers
   and co-locates with that automatically.
 
 ## Install
 
 ```bash
-pi install git:github.com/alonw0/pi-mesh
+pi install git:github.com/alonw0/pi-claude-link
 # or, for development:
-pi -e /path/to/pi-mesh/index.ts
+pi -e /path/to/pi-claude-link/index.ts
 ```
 
 Start pi normally — it joins the mesh on session start. Use it from either side:
@@ -79,8 +79,8 @@ node --experimental-strip-types test/reg-test.mjs     # registration + cleanup
 node --experimental-strip-types test/roundtrip.mjs    # inbound relay + outbound tool
 ```
 
-Set `PI_MESH_DEBUG=1` (or `touch /tmp/pi-mesh-debug.on`) to log to
-`/tmp/pi-mesh-debug.log`.
+Set `PI_CLAUDE_LINK_DEBUG=1` (or `touch /tmp/pi-claude-link-debug.on`) to log to
+`/tmp/pi-claude-link-debug.log`.
 
 ## License
 

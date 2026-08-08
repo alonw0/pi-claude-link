@@ -1,5 +1,5 @@
 /**
- * pi-mesh — mesh a pi coding-agent session with Claude Code.
+ * pi-claude-link — mesh a pi coding-agent session with Claude Code.
  *
  * On session start this extension registers the pi session as a peer in Claude's
  * cross-session registry (so it appears in Claude's /list-agents) and binds a
@@ -21,11 +21,11 @@ import path from "node:path";
 import { appendFileSync, existsSync } from "node:fs";
 import type { Server } from "node:net";
 
-// Debug logging: enabled by env PI_MESH_DEBUG or the sentinel /tmp/pi-mesh-debug.on
+// Debug logging: enabled by env PI_CLAUDE_LINK_DEBUG or the sentinel /tmp/pi-claude-link-debug.on
 // (pi may not propagate env to extensions in all modes, so the sentinel is handy).
 const dbg = (...a: unknown[]) => {
-  if (!(process.env.PI_MESH_DEBUG || existsSync("/tmp/pi-mesh-debug.on"))) return;
-  try { appendFileSync("/tmp/pi-mesh-debug.log", `[pi-mesh ${new Date().toISOString()}] ${a.join(" ")}\n`); } catch { /* */ }
+  if (!(process.env.PI_CLAUDE_LINK_DEBUG || existsSync("/tmp/pi-claude-link-debug.on"))) return;
+  try { appendFileSync("/tmp/pi-claude-link-debug.log", `[pi-claude-link ${new Date().toISOString()}] ${a.join(" ")}\n`); } catch { /* */ }
 };
 
 interface AskWaiter { resolve: (body: string) => void; timer: NodeJS.Timeout; }
@@ -146,10 +146,10 @@ export default function piMeshExtension(pi: ExtensionAPI) {
       server = await bindSocket(sockPath, (frame) => onFrame(frame));
       await registerPeer({ pid, sessionId, name: selfName, cwd, sockPath, status: "idle" });
       dbg(`started name=${selfName} pid=${pid} sock=${sockPath} session=${sessionId}`);
-      notify(`pi-mesh active as "${selfName}" — reachable from Claude Code /list-agents`, "info");
+      notify(`pi-claude-link active as "${selfName}" — reachable from Claude Code /list-agents`, "info");
     } catch (e) {
       started = false;
-      notify(`pi-mesh failed to start: ${(e as Error).message}`, "error");
+      notify(`pi-claude-link failed to start: ${(e as Error).message}`, "error");
     }
   }
 

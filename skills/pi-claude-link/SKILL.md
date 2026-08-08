@@ -1,9 +1,9 @@
 ---
-name: pi-mesh
+name: pi-claude-link
 description: List and message other AI coding sessions (Claude Code) running on this machine. Use when the user asks to see other agents/sessions, message another session, hand off to Claude, coordinate with another agent, or mentions "list agents", "mesh", or "message claude".
 ---
 
-# Messaging other agent sessions (pi-mesh)
+# Messaging other agent sessions (pi-claude-link)
 
 This machine runs a cross-agent mesh. Your session is reachable from Claude Code
 sessions, and you can reach them with the **`mesh`** tool:
