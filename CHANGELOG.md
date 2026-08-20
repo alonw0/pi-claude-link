@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- Peer name now tracks the pi session's display name. Previously the name was
+  captured once at `session_start`, so a name set via `/name`, `--name`, RPC, or
+  `pi.setSessionName()` after that moment was ignored and the session appeared in
+  Claude's `/list-agents` as the `pi-<cwd>` fallback. The extension now listens for
+  `session_info_changed` (and reconciles on `turn_start`) and pushes the current
+  name to Claude's registry so `/list-agents` updates live.
+
 ## [0.1.0] - 2026-08-08
 
 Initial release.

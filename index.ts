@@ -36,8 +36,23 @@ export default function piMeshExtension(pi: ExtensionAPI) {
   let sockPath = "";
   let ownFrom = "";
   let selfName = "";
+  let sessionCwd = "";
   const pid = process.pid;
   let lastCtx: ExtensionContext | undefined;
+
+  const fallbackName = () => `pi-${slugFromCwd(sessionCwd || process.cwd())}`;
+
+  // Apply a (possibly cleared) pi session name to our peer identity. Once we've
+  // registered, push it to Claude's registry so /list-agents updates live.
+  async function applyName(name?: string): Promise<void> {
+    const next = (name || "").trim() || fallbackName();
+    if (next === selfName) return;
+    selfName = next;
+    if (started) {
+      await updatePeer(pid, { name: selfName, nameSource: name ? "user" : "derived" }).catch(() => {});
+      dbg(`renamed peer to ${selfName}`);
+    }
+  }
 
   // Senders awaiting a relayed reply (their uds: addresses), populated on inbound.
   const pendingReplies = new Set<string>();
@@ -137,9 +152,10 @@ export default function piMeshExtension(pi: ExtensionAPI) {
     lastCtx = ctx;
     if (started) return;
     started = true;
-    const cwd = ctx.cwd || process.cwd();
+    sessionCwd = ctx.cwd || process.cwd();
+    const cwd = sessionCwd;
     const sessionId = ctx.sessionManager.getSessionId() || undefined;
-    selfName = pi.getSessionName() || `pi-${slugFromCwd(cwd)}`;
+    selfName = (pi.getSessionName() || "").trim() || fallbackName();
     sockPath = path.join(ccSocksDir(), `${pid}.sock`);
     ownFrom = `uds:${sockPath}`;
     try {
@@ -159,7 +175,17 @@ export default function piMeshExtension(pi: ExtensionAPI) {
   }
 
   pi.on("session_start", async (_e, ctx) => { await start(ctx); });
-  pi.on("turn_start", async (_e, ctx) => { lastCtx = ctx; if (!started) await start(ctx); });
+  pi.on("turn_start", async (_e, ctx) => {
+    lastCtx = ctx;
+    if (!started) await start(ctx);
+    // Catch a name that landed after session_start (e.g. --name applied late).
+    else await applyName(pi.getSessionName() ?? undefined);
+  });
+  pi.on("session_info_changed", async (event, ctx) => {
+    lastCtx = ctx;
+    if (!started) await start(ctx);
+    await applyName((event as { name?: string })?.name);
+  });
   pi.on("agent_end", async (event, ctx) => { lastCtx = ctx; relayReply(event); });
   pi.on("session_shutdown", async () => { await stop(); });
 
